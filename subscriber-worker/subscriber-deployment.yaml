@@ -1,19 +1,19 @@
 apiVersion: apps/v1 #  for k8s versions before 1.9.0 use apps/v1beta2  and before 1.8.0 use extensions/v1beta1
 kind: Deployment
 metadata:
-  name: subscriberManager-deployment
+  name: subscriber-manager-deployment
 spec:
   selector:
     matchLabels:
-      app: subscriberManager
+      app: subscriber-manager
   replicas: 1
   template:
     metadata:
       labels:
-        app: subscriberManager
+        app: subscriber-manager
     spec:
       containers:
-      - name: subscriberManager
+      - name: subscriber-manager
         image: soma5722/subscriber-worker:latest
         ports:
         - containerPort: 5000

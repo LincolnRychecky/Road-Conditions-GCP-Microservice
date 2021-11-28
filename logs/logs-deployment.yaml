@@ -14,7 +14,7 @@ spec:
     spec:
       containers:
       - name: logs
-        image: soma5722/finalProject-logs:latest
+        image: soma5722/finalproject-logs:latest
         resources:
           requests:
             cpu: 100m
