@@ -1,0 +1,25 @@
+apiVersion: apps/v1 #  for k8s versions before 1.9.0 use apps/v1beta2  and before 1.8.0 use extensions/v1beta1
+kind: Deployment
+metadata:
+  name: maps-worker-server
+  labels:
+    app: mapsworker
+spec:
+  selector:
+    matchLabels:
+      app: mapsworker
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        app: mapsworker
+    spec:
+      containers:
+      - name: maps-worker
+        image: lincolnrychecky/maps-worker:latest
+        env:
+        - name: REDIS_HOST
+          value: redis
+        - name: RABBITMQ_HOST
+          value: rabbitmq
+---
