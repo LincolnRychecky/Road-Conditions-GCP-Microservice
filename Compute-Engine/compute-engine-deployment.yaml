@@ -1,0 +1,25 @@
+apiVersion: apps/v1 #  for k8s versions before 1.9.0 use apps/v1beta2  and before 1.8.0 use extensions/v1beta1
+kind: Deployment
+metadata:
+  name: compute-engine-deployment
+spec:
+  selector:
+    matchLabels:
+      app: compute-engine
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        app: compute-engine
+    spec:
+      containers:
+      - name: compute-engine
+        image: soma5722/compute-engine:latest
+        ports:
+        - containerPort: 5000
+        env:
+        - name: REDIS_HOST
+          value: redis
+        - name: RABBITMQ_HOST
+          value: rabbitmq
+---
