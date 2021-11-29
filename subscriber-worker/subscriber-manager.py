@@ -60,7 +60,7 @@ def callback(ch, method, properties, body):
     if(cmd == "02"):
       if(len(cmd)<3):
         print(" unsubscribe cmd is not proper, follow CMD SUBCMD ARG1 ARG2 ARG3")
-      subscribe(cmd[2])
+      unsubscribe(cmd[2])
 
     if(cmd == "03"):
       if(len(cmd)<5):
