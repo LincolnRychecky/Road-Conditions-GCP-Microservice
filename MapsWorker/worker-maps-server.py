@@ -68,24 +68,29 @@ def callback(ch, method, properties, body):
     locations = json.loads(body.decode())["locations"]
     print(locations[0])
     print(locations[1])
-    if db.get(locations[0]) and (locations[1] in json.loads(db.get(locations[0])).keys()):
+
+    # Request directions via vehichle
+    now = datetime.now()
+    directions_result = gmaps.directions(locations[0],
+                                        locations[1],
+                                        mode="driving",
+                                        departure_time=now)
+
+    startAddr = directions_result[0]['legs'][0]['start_address']
+    endAddr = directions_result[0]['legs'][0]['end_address']
+
+    if db.get(startAddr) and ((endAddr in json.loads(db.get(startAddr))).keys()):
         print(" directions already in database")
     else:
-        # Request directions via vehichle
-        now = datetime.now()
-        directions_result = gmaps.directions(locations[0],
-                                            locations[1],
-                                            mode="driving",
-                                            departure_time=now)
         # Address is a key, but destination is not already in db
-        if db.get(locations[0]) and (locations[1] not in json.loads(db.get(locations[0])).keys()):
-            data = json.loads(db.get(locations[0]))
-            data[locations[1]] = directions_result[0]['legs']
-            db.mset({locations[0]: json.dumps(data)})
+        if db.get(startAddr) and (endAddr not in json.loads(db.get(startAddr)).keys()):
+            data = json.loads(db.get(startAddr))
+            data[endAddr] = directions_result[0]['legs']
+            db.mset({startAddr: json.dumps(data)})
         # address is not a key
         else:
-            data = {locations[1]: directions_result[0]['legs']}
-            db.mset({locations[0]: json.dumps(data)})
+            data = {endAddr: directions_result[0]['legs']}
+            db.mset({startAddr: json.dumps(data)})
 
     print(" [x] callback complete")
 
