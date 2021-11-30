@@ -1,0 +1,25 @@
+apiVersion: apps/v1 #  for k8s versions before 1.9.0 use apps/v1beta2  and before 1.8.0 use extensions/v1beta1
+kind: Deployment
+metadata:
+  name: worker-server
+  labels:
+    app: worker
+spec:
+  selector:
+    matchLabels:
+      app: worker
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        app: worker
+    spec:
+      containers:
+      - name: rest-worker
+        image: lincolnrychecky/sentiment-worker:latest
+        env:
+        - name: REDIS_HOST
+          value: redis
+        - name: RABBITMQ_HOST
+          value: rabbitmq
+---
