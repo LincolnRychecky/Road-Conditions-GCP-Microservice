@@ -1,22 +1,22 @@
 apiVersion: apps/v1 #  for k8s versions before 1.9.0 use apps/v1beta2  and before 1.8.0 use extensions/v1beta1
 kind: Deployment
 metadata:
-  name: worker-server
+  name: weather-worker-server
   labels:
-    app: worker
+    app: weatherworker
 spec:
   selector:
     matchLabels:
-      app: worker
+      app: weatherworker
   replicas: 1
   template:
     metadata:
       labels:
-        app: worker
+        app: weatherworker
     spec:
       containers:
-      - name: rest-worker
-        image: lincolnrychecky/sentiment-worker:latest
+      - name: weatherworker
+        image: lincolnrychecky/weather-worker:latest
         env:
         - name: REDIS_HOST
           value: redis
