@@ -95,7 +95,7 @@ rabbitMQChannel = rabbitMQ.channel()
 #
 # Define or rabbitMQ queues / exchanges
 #
-rabbitMQChannel.queue_declare(queue='toWeatherrWorker')
+rabbitMQChannel.queue_declare(queue='toWeatherWorker')
 rabbitMQChannel.exchange_declare(exchange='logs', exchange_type='topic')
 infoKey = f"{platform.node()}.worker.info"
 debugKey = f"{platform.node()}.worker.debug"

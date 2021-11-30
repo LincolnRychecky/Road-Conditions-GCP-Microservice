@@ -73,7 +73,7 @@ def callback(ch, method, properties, body):
     if not db.get(data[0]['start_address']):
         dbData = {data[0]['end_address']: weather}
         db.mset({data[0]['start_address']: json.dumps(dbData)})
-        db.mset({data[0]['start_address']:"Hello"})
+        # db.mset({data[0]['start_address']:"Hello"})
     else:
         dbData = json.loads(db.get(data[0]['start_address']))
         dbData[data[0]['end_address']] = weather
