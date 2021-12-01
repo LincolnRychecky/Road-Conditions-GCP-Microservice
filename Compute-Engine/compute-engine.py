@@ -42,7 +42,7 @@ def to_maps_worker(message):
     # Publish the message to the toWorker exchange so work will be done on the worker side
     formattedJson = json.dumps(message)
     channel.basic_publish(exchange='', routing_key='toMapsWorker', body=formattedJson)
-    print(" [x] Sent %r:%r" % ('toMapsWorker', message))
+    print(" [x] Sent %r" % ('toMapsWorker'))
 
      # close the channel and connection
     channel.close()
@@ -57,11 +57,46 @@ def to_weather_worker(message):
     # Publish the message to the toWorker exchange so work will be done on the worker side
     formattedJson = json.dumps(message)
     channel.basic_publish(exchange='', routing_key='toWeatherWorker', body=formattedJson)
-    print(" [x] Sent %r:%r" % ('toWeatherWorker', message))
+    print(" [x] Sent %r" % ('toWeatherWorker'))
 
      # close the channel and connection
     channel.close()
     connection.close()
+
+def construct_message(weatherData):
+    badWeather = {}
+    windSpeed = {}
+    temp = {}
+
+    for location in weatherData:
+        if location['name'] not in badWeather.keys():
+            badWeather[location['name']] = [location['weather'][0]['description']]
+            windSpeed[location['name']] = [location['wind']['speed']]
+            temp[location['name']] = [round((location['main']['temp'] - 273.15) * 9/5 + 32,1)]
+        else:
+            badWeather[location['name']].append(location['weather'][0]['description'])
+            windSpeed[location['name']].append(location['wind']['speed'])
+            temp[location['name']].append(round((location['main']['temp'] - 273.15) * 9/5 + 32,1))
+
+    for location in windSpeed:
+        windSpeed[location] = sum(windSpeed[location])/len(windSpeed[location])
+            
+    for location in temp:
+        temp[location] = sum(temp[location])/len(temp[location])
+    
+    emailMessage = "Here is the weather you should expect on your drive today: \n\n"
+
+    for location in badWeather:
+        emailMessage = emailMessage + location + ": "
+        for element in list(set(badWeather[location])):
+            emailMessage = emailMessage + element + ', '
+        emailMessage = emailMessage + "\n"
+        emailMessage = emailMessage + "temp: " + str(temp[location]) + " degrees F.\n"
+        emailMessage = emailMessage + "wind: " + str(windSpeed[location]) + " mph.\n"
+        emailMessage = emailMessage + "\n"
+    emailMessage = emailMessage + "Have a safe drive"
+    # return the formatted message ready for sending to end user
+    return emailMessage
 
 def callback(ch, method, properties, body):
     print(datetime.datetime.now())
@@ -82,23 +117,24 @@ def callback(ch, method, properties, body):
         # TODO Single Request
         print("Single Request")
 
-        data = {'locations': [
+        mapsData = {'locations': [
                      cmd[1],
                      cmd[2]
                   ]
             }
-        
+        # get formatted addresses as they will be the unique keys in the redis db for this request
         formattedAddressStart = gmaps.geocode(cmd[1])[0]['formatted_address']
         formattedAddressEnd = gmaps.geocode(cmd[2])[0]['formatted_address']
-
-        to_maps_worker(data)
+        to_maps_worker(mapsData)
         # This is here just to ensure maps worker work is complete and stored in database. Will change to wait for rabbit MQ awknowledgement
-        time.sleep(4)
+        time.sleep(3)
         directionsData = {'path': json.loads(directionsdb.get(formattedAddressStart))[formattedAddressEnd]}
         to_weather_worker(directionsData)
-        time.sleep(3)
-
-        print("Completed the single request! Check DB for results")
+        time.sleep(5)
+        weatherData = json.loads(weatherdb.get(formattedAddressStart))[formattedAddressEnd]
+        weatherMessage = construct_message(weatherData)
+        print(weatherMessage)
+        print("Callback Complete")
 
 
 rabbitMQ = pika.BlockingConnection(

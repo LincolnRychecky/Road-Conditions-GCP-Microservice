@@ -66,8 +66,6 @@ def callback(ch, method, properties, body):
     print(" [x] %r:%r" % (method.routing_key, body.decode()))
     # Access the sentences from the body of the message
     locations = json.loads(body.decode())["locations"]
-    print(locations[0])
-    print(locations[1])
 
     # Request directions via vehichle
     now = datetime.now()
@@ -79,7 +77,7 @@ def callback(ch, method, properties, body):
     startAddr = directions_result[0]['legs'][0]['start_address']
     endAddr = directions_result[0]['legs'][0]['end_address']
 
-    if db.get(startAddr) and ((endAddr in json.loads(db.get(startAddr))).keys()):
+    if db.get(startAddr) and (endAddr in json.loads(db.get(startAddr)).keys()):
         print(" directions already in database")
     else:
         # Address is a key, but destination is not already in db
@@ -91,6 +89,7 @@ def callback(ch, method, properties, body):
         else:
             data = {endAddr: directions_result[0]['legs']}
             db.mset({startAddr: json.dumps(data)})
+        print(" directions added to database")
 
     print(" [x] callback complete")
 

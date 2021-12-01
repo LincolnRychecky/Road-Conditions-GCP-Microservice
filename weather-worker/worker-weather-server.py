@@ -54,7 +54,7 @@ apiKey = "e82669bea7b79714ada39720b6fd35df"
 
 def callback(ch, method, properties, body):
     # print(" [x] %r:%r" % (method.routing_key, body.decode()))
-    print(" [x] %r:%r" % (method.routing_key, "1"))
+    print(" [x] %r:%r" % (method.routing_key, "message"))
     # Access the json from the message
     data = json.loads(body.decode())['path']
 
