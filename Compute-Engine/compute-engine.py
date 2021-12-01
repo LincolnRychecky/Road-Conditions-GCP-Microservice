@@ -88,8 +88,8 @@ def callback(ch, method, properties, body):
                   ]
             }
         
-        formattedAddressStart = gmaps.geocode(cmd[1])
-        formattedAddressEnd = gmaps.geocode(cmd[2])
+        formattedAddressStart = gmaps.geocode(cmd[1])[0]['formatted_address']
+        formattedAddressEnd = gmaps.geocode(cmd[2])[0]['formatted_address']
 
         to_maps_worker(data)
         # This is here just to ensure maps worker work is complete and stored in database. Will change to wait for rabbit MQ awknowledgement
