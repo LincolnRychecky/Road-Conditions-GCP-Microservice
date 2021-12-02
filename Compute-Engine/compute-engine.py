@@ -114,7 +114,6 @@ def callback(ch, method, properties, body):
     #     # TODO Unsubscribe
     #     print("Unsubscribe")
     if cmd[0] == "00":
-        # TODO Single Request
         print("Single Request")
 
         mapsData = {'locations': [
@@ -126,15 +125,15 @@ def callback(ch, method, properties, body):
         formattedAddressStart = gmaps.geocode(cmd[1])[0]['formatted_address']
         formattedAddressEnd = gmaps.geocode(cmd[2])[0]['formatted_address']
         to_maps_worker(mapsData)
-        # This is here just to ensure maps worker work is complete and stored in database. Will change to wait for rabbit MQ awknowledgement
+        # do not proceed until directions database has been updated
         time.sleep(3)
         directionsData = {'path': json.loads(directionsdb.get(formattedAddressStart))[formattedAddressEnd]}
         to_weather_worker(directionsData)
+        # do not proceed until weather database has been updated
         time.sleep(5)
         weatherData = json.loads(weatherdb.get(formattedAddressStart))[formattedAddressEnd]
         weatherMessage = construct_message(weatherData)
-        print(weatherMessage)
-        print("Callback Complete")
+        print(weatherMessage + "\n Callback Complete")
 
 
 rabbitMQ = pika.BlockingConnection(
