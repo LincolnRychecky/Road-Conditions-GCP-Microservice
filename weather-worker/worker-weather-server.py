@@ -8,6 +8,7 @@ import pika
 import redis
 import json
 import requests
+from datetime import datetime
 
 hostname = platform.node()
 
@@ -22,7 +23,7 @@ print(f"Connecting to rabbitmq({rabbitMQHost}) and redis({redisHost})")
 ##
 ## Set up redis connections
 ##
-db = redis.Redis(host='redis', db=0)                                                                           
+db = redis.Redis(host=redisHost, db=0)                                                                           
 
 ##
 ## Set up rabbitmq connection
@@ -53,6 +54,8 @@ def log_info(message, key=infoKey):
 apiKey = "e82669bea7b79714ada39720b6fd35df"
 
 def callback(ch, method, properties, body):
+    today = datetime.now()
+    timestamp = str(today.year) + str(today.month) + str(today.day) + str(today.hour)
     # print(" [x] %r:%r" % (method.routing_key, body.decode()))
     print(" [x] %r:%r" % (method.routing_key, "message"))
     # Access the json from the message
@@ -70,14 +73,20 @@ def callback(ch, method, properties, body):
         weather.append(response.json())
 
     # add to database
-    if not db.get(data[0]['start_address']):
-        dbData = {data[0]['end_address']: weather}
-        db.mset({data[0]['start_address']: json.dumps(dbData)})
-        # db.mset({data[0]['start_address']:"Hello"})
+    # if not db.get(data[0]['start_address']):
+    #     dbData = {data[0]['end_address']: weather}
+    #     db.mset({data[0]['start_address']: json.dumps(dbData)})
+    #     # db.mset({data[0]['start_address']:"Hello"})
+    # else:
+    #     dbData = json.loads(db.get(data[0]['start_address']))
+    #     dbData[data[0]['end_address']] = weather
+    #     db.mset({data[0]['start_address']: json.dumps(dbData)})
+    if not db.get(data[0]['start_address']+"$"+data[0]['end_address']+"$"+timestamp):
+        dbData = {"weather": weather}
+        db.mset({data[0]['start_address']+"$"+data[0]['end_address']+"$"+timestamp:json.dumps(dbData)})
     else:
-        dbData = json.loads(db.get(data[0]['start_address']))
-        dbData[data[0]['end_address']] = weather
-        db.mset({data[0]['start_address']: json.dumps(dbData)})
+        print("weather already in database")
+
 
     print(" [x] callback complete")
 
