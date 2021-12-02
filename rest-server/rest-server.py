@@ -25,13 +25,13 @@ log.setLevel(logging.DEBUG)
 def root():
     return "<p>Hello, World new final project!</p>"
 
-@app.route('/api/subscribe/<EmailId>', methods=['GET'])
-def subscribe(EmailId):
+@app.route('/api/subscribe/<EmailId>/<startLoc>/<EndLoc>', methods=['GET'])
+def subscribe(EmailId,startLoc,EndLoc):
     rabbitMQ = pika.BlockingConnection(pika.ConnectionParameters(host='rabbitmq'))
     rabbitMQChannel = rabbitMQ.channel()
     rabbitMQChannel.queue_declare(queue='toComputeEngine')
     print("got a request to subscribe for the api from user with email id " + EmailId)
-    message = '01'+' '+ EmailId
+    message = '01'+'$'+ EmailId + '$' + startLoc+ '$' + EndLoc
     rabbitMQChannel.basic_publish(exchange='',routing_key='toComputeEngine', body=message)
     rabbitMQChannel.close()
     rabbitMQ.close()
@@ -45,7 +45,7 @@ def unsubscribe(EmailId):
     rabbitMQChannel = rabbitMQ.channel()
     rabbitMQChannel.queue_declare(queue='toComputeEngine')
     print("got a request to subscribe for the api from user with email id " + EmailId)
-    message = '02'+' '+ EmailId
+    message = '02'+'$'+ EmailId
     rabbitMQChannel.basic_publish(exchange='',routing_key='toComputeEngine', body=message)
     rabbitMQChannel.close()
     rabbitMQ.close()
@@ -55,13 +55,13 @@ def unsubscribe(EmailId):
 
 
 
-@app.route('/api/getSpecificRouteWeather/<startLoc>/<endLoc>', methods=['GET'])
-def getSpecificRouteWeather(startLoc, endLoc):
+@app.route('/api/getSpecificRouteWeather/<startLoc>/<endLoc>/<EmailId>', methods=['GET'])
+def getSpecificRouteWeather(startLoc, endLoc, EmailId):
     rabbitMQ = pika.BlockingConnection(pika.ConnectionParameters(host='rabbitmq'))
     rabbitMQChannel = rabbitMQ.channel()
     rabbitMQChannel.queue_declare(queue='toComputeEngine')
     print("got a request to getSpecificRouteWeather from user with startLoc " + startLoc + " endLoc "+endLoc)
-    message = '05'+' '+ startLoc+' '+endLoc
+    message = '00'+'$'+ startLoc+'$'+endLoc+'$'+EmailId
     rabbitMQChannel.basic_publish(exchange='',routing_key='toComputeEngine', body=message)
     rabbitMQChannel.close()
     rabbitMQ.close()
