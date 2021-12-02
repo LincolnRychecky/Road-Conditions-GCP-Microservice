@@ -11,6 +11,7 @@ import io,os
 import sys, platform
 import pika
 import json
+import datetime as date
 
 #
 # Unless you have set the RABBITMQ_HOST environment variable, use localhost
