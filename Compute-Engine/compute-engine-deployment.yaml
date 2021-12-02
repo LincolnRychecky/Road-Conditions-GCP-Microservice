@@ -14,7 +14,7 @@ spec:
     spec:
       containers:
       - name: compute-engine
-        image: soma5722/compute-engine:latest
+        image: lincolnrychecky/compute-engine:latest
         ports:
         - containerPort: 5000
         env:

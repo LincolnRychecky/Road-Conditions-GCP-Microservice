@@ -1,7 +1,7 @@
 VERSION=latest
-DOCKERUSER=soma5722
+DOCKERUSER=lincolnrychecky
 
 build:
 	docker build -f Dockerfile -t compute-engine .
-	docker tag compute-engine soma5722/compute-engine:latest
-	docker push soma5722/compute-engine:latest
+	docker tag compute-engine lincolnrychecky/compute-engine:latest
+	docker push lincolnrychecky/compute-engine:latest

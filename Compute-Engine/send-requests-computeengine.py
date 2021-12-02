@@ -22,7 +22,7 @@ rabbitMQHost = os.getenv("RABBITMQ_HOST") or "localhost"
 # so you'll need to test that out another way or modify this example.
 #
 
-message = "00$924 Graland Place, Highlands Ranch, CO$950 28th St, Boulder, CO"
+message = "00$924 Graland Place, Highlands Ranch, CO$950 28th St, Boulder, CO$liry9073@colorado.edu"
 
 rabbitMQ = pika.BlockingConnection(
     pika.ConnectionParameters(host=rabbitMQHost))
