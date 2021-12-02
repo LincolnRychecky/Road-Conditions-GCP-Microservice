@@ -28,7 +28,7 @@ print(f"Connecting to rabbitmq({rabbitMQHost}) and redis({redisHost})")
 ##
 ## Set up redis connections
 ##
-db = redis.Redis(host='redis', db=1)                                                                           
+db = redis.Redis(host=redisHost, db=1)                                                                           
 
 ##
 ## Set up rabbitmq connection
@@ -77,19 +77,24 @@ def callback(ch, method, properties, body):
     startAddr = directions_result[0]['legs'][0]['start_address']
     endAddr = directions_result[0]['legs'][0]['end_address']
 
-    if db.get(startAddr) and (endAddr in json.loads(db.get(startAddr)).keys()):
+    # if db.get(startAddr) and (endAddr in json.loads(db.get(startAddr)).keys()):
+    #     print(" directions already in database")
+    # else:
+    #     # Address is a key, but destination is not already in db
+    #     if db.get(startAddr) and (endAddr not in json.loads(db.get(startAddr)).keys()):
+    #         data = json.loads(db.get(startAddr))
+    #         data[endAddr] = directions_result[0]['legs']
+    #         db.mset({startAddr: json.dumps(data)})
+    #     # address is not a key
+    #     else:
+    #         data = {endAddr: directions_result[0]['legs']}
+    #         db.mset({startAddr: json.dumps(data)})
+    #     print(" directions added to database")
+    if db.get(startAddr+"$"+endAddr):
         print(" directions already in database")
     else:
-        # Address is a key, but destination is not already in db
-        if db.get(startAddr) and (endAddr not in json.loads(db.get(startAddr)).keys()):
-            data = json.loads(db.get(startAddr))
-            data[endAddr] = directions_result[0]['legs']
-            db.mset({startAddr: json.dumps(data)})
-        # address is not a key
-        else:
-            data = {endAddr: directions_result[0]['legs']}
-            db.mset({startAddr: json.dumps(data)})
-        print(" directions added to database")
+        db.mset({startAddr+"$"+endAddr: json.dumps(directions_result[0]['legs'])})
+
 
     print(" [x] callback complete")
 
