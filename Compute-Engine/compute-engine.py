@@ -145,7 +145,7 @@ def callback(ch, method, properties, body):
           weatherData = json.loads(weatherdb.get(formattedAddressStart))[formattedAddressEnd]
           weatherMessage = construct_message(weatherData)
         else:
-          print("db was not ready")
+          print("db was not ready ")
         message  = "05"+"$"+cmd[3]+"$"+weatherMessage
         toSubscriptionService(message)
         print(weatherMessage + "\n Callback Complete")

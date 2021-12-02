@@ -11,11 +11,15 @@ import requests
 import time
 import datetime
 import smtplib
-from queue import Queue
-from threading import Thread
+import logging
+import queue
+import threading
+import time
+
 
 hostname = platform.node()
-
+items_queue = queue.Queue()
+running = True
 ##Rabbit MQ commands 
 ## CMD SUBCMD ARG1 ARG2 ARG3
 ## CMD - 00 Default 01 subscribe, 02 - unsubscribe, 03 0nWeatherChange
@@ -39,54 +43,78 @@ def sendGmail(receiiverEmailId, senderEmailId, senderEmailPsw, content):
    s.quit()
 
 subscriberList = []
-def polling(in_q):
-     subscriberListLocal = []
-     count  = 0
-     while True:
-        # Get some data in every 1 sec
-        time.sleep(1)
-        count = count +1
-        newSubscriber = in_q.get()
-        if(len(newSubscriber)!=0):
-          print("got a subscribe/unsubscribe request")
-          cmd  =  newSubscriber.split('$')
-          isPresent = False
-          for subscriber in subscriberListLocal:
-              if(subscriber == newSubscriber):
-                isPresent = True
-          if(isPresent == False and cmd[0]=='01'):      
+
+
+def items_queue_worker():
+    timer  = 1
+    subscriberListLocal = []
+    print("Thread started")
+    sys.stdout.flush()
+    while running:
+        try:
+            item = items_queue.get(timeout=.1)
+            timer = timer + 1
+            if(timer == 120):
+              subscriberListLocal = process_item("",subscriberListLocal)
+              timer  = 0
+            if item is None:
+                continue
+
+            try:
+                subscriberListLocal = process_item(item,subscriberListLocal)
+            finally:
+                items_queue.task_done()
+
+        except queue.Empty:
+            pass
+        except:
+            logging.exception('error while processing item')
+
+
+def process_item(newSubscriber,subscriberListLocal):
+    if(len(newSubscriber)==0):
+      print('processing {} started...'.format(newSubscriber))
+      sys.stdout.flush()
+      print("going to update users about wearther condition")
+      sys.stdout.flush()
+      rabbitMQ = pika.BlockingConnection(pika.ConnectionParameters(host='rabbitmq'))
+      rabbitMQChannel = rabbitMQ.channel()
+      rabbitMQChannel.queue_declare(queue='toComputeEngine')
+      for subscriber in subscriberListLocal: 
+        cmd = subscriber.split('$')
+        print("Sending update for subscribed user" + cmd[1] + " user with startLoc " + cmd[2] + " endLoc "+cmd[3])
+        sys.stdout.flush()
+        rabbitMQChannel.basic_publish(exchange='',routing_key='toComputeEngine', body=subscriber)
+      rabbitMQChannel.close()
+      rabbitMQ.close()
+      return subscriberListLocal
+
+    print('processing {} started...'.format(newSubscriber))
+    sys.stdout.flush()
+    time.sleep(0.5)
+    print("got a subscribe/unsubscribe request")
+    sys.stdout.flush()
+    cmd  =  newSubscriber.split('$')
+    isPresent = False
+    for subscriber in subscriberListLocal:
+      if(subscriber == newSubscriber):
+        isPresent = True
+        if(isPresent == False and cmd[0]=='01'):      
             print("got a subscribe request")
             subscriberListLocal.append(newSubscriber)
-          if(isPresent == True and cmd[0]=='02'):
+        if(isPresent == True and cmd[0]=='02'):
             print("got an unsubscribe request")
             subscriberListLocal.remove(newSubscriber)
-            
-        # Process the data in every 2 minutes
-        if(count==120):
-          print("going to update users about wearther condition")
-          rabbitMQ = pika.BlockingConnection(pika.ConnectionParameters(host='rabbitmq'))
-          rabbitMQChannel = rabbitMQ.channel()
-          rabbitMQChannel.queue_declare(queue='toComputeEngine')
-          for subscriber in subscriberListLocal: 
-              cmd = subscriber.split('$')
-              print("Sending update for subscribed user" + cmd[1] + " user with startLoc " + cmd[2] + " endLoc "+cmd[3])
-              rabbitMQChannel.basic_publish(exchange='',routing_key='toComputeEngine', body=subscriber)
-              
-          rabbitMQChannel.close()
-          rabbitMQ.close()
-          count  = 0    
-
-q = Queue()
-t1 = Thread(target = polling, args =(q, ))
-t1.start()
+    print('processing {} done'.format(newSubscriber))
+    return subscriberListLocal
 
 def subscribe(string):
     subscriberList.append(string)
-    q.put(string)
+    items_queue.put(string)
     return
 def unsubscribe(string):
     subscriberList.remove(string)
-    q.put(string)
+    items_queue.put(string)
     return
 def onWeatherChange(message):
     for subscriber in subscriberList:
@@ -120,6 +148,12 @@ def callback(ch, method, properties, body):
 # Add code to read the persistant subscriber list from db
 #
 
+threading.Thread(target=items_queue_worker).start()
+#for i in range(10):
+#    time.sleep(1)
+#    items_queue.put(-1*i)
+    # Wait for all items to finish processing
+
 rabbitMQ = pika.BlockingConnection(
         pika.ConnectionParameters(host='rabbitmq'))
 rabbitMQChannel = rabbitMQ.channel()
@@ -130,3 +164,6 @@ rabbitMQChannel.basic_qos(prefetch_count=1)
 rabbitMQChannel.basic_consume(queue='toSubscriberWorker', on_message_callback=callback,auto_ack=True)
 rabbitMQChannel.start_consuming()
 #rabbitMQChannel.exchange_declare(exchange='logs', exchange_type='topic')
+#subscribe('01$abcd@gmail.com$Boulder$Denver')
+#items_queue.join()
+#running = False
