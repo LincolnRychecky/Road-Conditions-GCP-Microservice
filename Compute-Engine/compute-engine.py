@@ -28,8 +28,8 @@ rabbitMQHost = os.getenv("RABBITMQ_HOST") or "localhost"
 adminEmailId = 'soma5722@colorado.edu'
 adminEmailPsw = ''
 
-directionsdb = redis.Redis(host="localhost", charset="utf-8", db=1, decode_responses=True)
-weatherdb = redis.Redis(host="localhost", charset="utf-8", db=0, decode_responses=True)
+directionsdb = redis.Redis(host='redis', charset="utf-8", db=1, decode_responses=True)
+weatherdb = redis.Redis(host='redis', charset="utf-8", db=0, decode_responses=True)
 
 print(f"Connecting to rabbitmq({rabbitMQHost}) and redis({redisHost})")
 
@@ -126,13 +126,18 @@ def callback(ch, method, properties, body):
         formattedAddressEnd = gmaps.geocode(cmd[2])[0]['formatted_address']
         to_maps_worker(mapsData)
         # do not proceed until directions database has been updated
-        time.sleep(3)
+        time.sleep(6)
         directionsData = {'path': json.loads(directionsdb.get(formattedAddressStart))[formattedAddressEnd]}
         to_weather_worker(directionsData)
         # do not proceed until weather database has been updated
-        time.sleep(5)
-        weatherData = json.loads(weatherdb.get(formattedAddressStart))[formattedAddressEnd]
-        weatherMessage = construct_message(weatherData)
+        time.sleep(7)
+        if(len(weatherdb.get(formattedAddressStart))):
+          print("checking weather db")  
+          print(weatherdb.get(formattedAddressStart))  
+          weatherData = json.loads(weatherdb.get(formattedAddressStart))[formattedAddressEnd]
+          weatherMessage = construct_message(weatherData)
+        else:
+          print("db was not ready")
         print(weatherMessage + "\n Callback Complete")
 
 

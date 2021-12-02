@@ -16,7 +16,7 @@ spec:
     spec:
       containers:
       - name: weatherworker
-        image: lincolnrychecky/weather-worker:latest
+        image: soma5722/weather-worker:latest
         env:
         - name: REDIS_HOST
           value: redis

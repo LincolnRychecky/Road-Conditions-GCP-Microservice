@@ -28,7 +28,7 @@ print(f"Connecting to rabbitmq({rabbitMQHost}) and redis({redisHost})")
 ##
 ## Set up redis connections
 ##
-db = redis.Redis(host=redisHost, db=1)                                                                           
+db = redis.Redis(host='redis', db=1)                                                                           
 
 ##
 ## Set up rabbitmq connection

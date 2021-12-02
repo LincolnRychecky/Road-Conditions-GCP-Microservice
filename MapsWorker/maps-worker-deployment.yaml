@@ -16,7 +16,7 @@ spec:
     spec:
       containers:
       - name: maps-worker
-        image: lincolnrychecky/maps-worker:latest
+        image: soma5722/maps-worker:latest
         env:
         - name: REDIS_HOST
           value: redis
