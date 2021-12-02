@@ -97,6 +97,14 @@ def construct_message(weatherData):
     emailMessage = emailMessage + "Have a safe drive"
     # return the formatted message ready for sending to end user
     return emailMessage
+def toSubscriptionService(string):
+    connection = pika.BlockingConnection(
+    pika.ConnectionParameters(host=rabbitMQHost))
+    channel = connection.channel()
+    channel.basic_publish(exchange='', routing_key='toSubscriberWorker', body=string)
+    print(" [x] Sent %r" % ('toSubscriberWorker'))
+    channel.close()
+    connection.close()
 
 def callback(ch, method, properties, body):
     print(datetime.datetime.now())
@@ -104,14 +112,13 @@ def callback(ch, method, properties, body):
     string  = body.decode('utf-8')
     cmd  =  string.split('$')
 
-    # if cmd == "00":
-    #     # TODO Default
-    #     print("Default")
-    # if cmd == "01":
-    #     # TODO Subscribe
+    #if cmd == "00":
+    #   toSubscriptionService(string)
+    if cmd[0] == "01":
+       toSubscriptionService(string)
     #     print("Subscribe")
-    # if cmd == "02":
-    #     # TODO Unsubscribe
+    if cmd[0] == "02":
+       toSubscriptionService(string)
     #     print("Unsubscribe")
     if cmd[0] == "00":
         print("Single Request")
@@ -131,6 +138,7 @@ def callback(ch, method, properties, body):
         to_weather_worker(directionsData)
         # do not proceed until weather database has been updated
         time.sleep(7)
+        weatherMessage = ""
         if(len(weatherdb.get(formattedAddressStart))):
           print("checking weather db")  
           print(weatherdb.get(formattedAddressStart))  
@@ -138,6 +146,8 @@ def callback(ch, method, properties, body):
           weatherMessage = construct_message(weatherData)
         else:
           print("db was not ready")
+        message  = "05"+"$"+cmd[3]+"$"+weatherMessage
+        toSubscriptionService(message)
         print(weatherMessage + "\n Callback Complete")
 
 

@@ -47,29 +47,33 @@ def polling(in_q):
         time.sleep(1)
         count = count +1
         newSubscriber = in_q.get()
-        
         if(len(newSubscriber)!=0):
+          print("got a subscribe/unsubscribe request")
           cmd  =  newSubscriber.split('$')
           isPresent = False
           for subscriber in subscriberListLocal:
               if(subscriber == newSubscriber):
                 isPresent = True
           if(isPresent == False and cmd[0]=='01'):      
+            print("got a subscribe request")
             subscriberListLocal.append(newSubscriber)
           if(isPresent == True and cmd[0]=='02'):
+            print("got an unsubscribe request")
             subscriberListLocal.remove(newSubscriber)
             
         # Process the data in every 2 minutes
         if(count==120):
-          for subscriber in subscriberListLocal:
+          print("going to update users about wearther condition")
+          rabbitMQ = pika.BlockingConnection(pika.ConnectionParameters(host='rabbitmq'))
+          rabbitMQChannel = rabbitMQ.channel()
+          rabbitMQChannel.queue_declare(queue='toComputeEngine')
+          for subscriber in subscriberListLocal: 
               cmd = subscriber.split('$')
-              rabbitMQ = pika.BlockingConnection(pika.ConnectionParameters(host='rabbitmq'))
-              rabbitMQChannel = rabbitMQ.channel()
-              rabbitMQChannel.queue_declare(queue='toComputeEngine')
               print("Sending update for subscribed user" + cmd[1] + " user with startLoc " + cmd[2] + " endLoc "+cmd[3])
               rabbitMQChannel.basic_publish(exchange='',routing_key='toComputeEngine', body=subscriber)
-              rabbitMQChannel.close()
-              rabbitMQ.close()
+              
+          rabbitMQChannel.close()
+          rabbitMQ.close()
           count  = 0    
 
 q = Queue()
@@ -106,10 +110,10 @@ def callback(ch, method, properties, body):
         print(" unsubscribe cmd is not proper, follow CMD SUBCMD ARG1 ARG2 ARG3")
       unsubscribe(string)
 
-    if(cmd == "03"):
-      if(len(cmd)<5):
-        print(" unsubscribe cmd is not proper, follow CMD SUBCMD ARG1 ARG2 ARG3")
-        onWeatherChange(cmd[2]+" "+cmd[3]+" "+cmd[4])
+    if(cmd == "05"):
+        sendGmail(cmd[1],adminEmailId,adminEmailPsw,cmd[2])
+        print(" Sending mail to subscriber "+ cmd[1])
+        #onWeatherChange(cmd[2]+" "+cmd[3]+" "+cmd[4])
 
 
 #
