@@ -3,5 +3,5 @@ DOCKERUSER=lincolnrychecky
 
 build:
 	docker build -f Dockerfile -t weather-worker .
-	docker tag weather-worker soma5722/weather-worker:latest
-	docker push soma5722/weather-worker:latest
+	docker tag weather-worker lincolnrychecky/weather-worker:latest
+	docker push lincolnrychecky/weather-worker:latest
