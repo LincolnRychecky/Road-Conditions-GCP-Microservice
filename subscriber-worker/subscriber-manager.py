@@ -19,6 +19,7 @@ import time
 
 hostname = platform.node()
 items_queue = queue.Queue()
+timeInterval = 120
 running = True
 ##Rabbit MQ commands 
 ## CMD SUBCMD ARG1 ARG2 ARG3
@@ -36,29 +37,40 @@ subscriptionListDB = redis.Redis(host='redis', charset="utf-8", db=2, decode_res
 print(f"Connecting to rabbitmq({rabbitMQHost}) and redis({redisHost})")
 
 def sendGmail(receiiverEmailId, senderEmailId, senderEmailPsw, content):
-   s = smtplib.SMTP(senderEmailId, 587)
+   print("sending mail to "+receiiverEmailId)
+   s = smtplib.SMTP('smtp.gmail.com', 587)
    s.starttls()
    s.login(senderEmailId, senderEmailPsw)
    s.sendmail(senderEmailId, receiiverEmailId, content)
    s.quit()
 
 subscriberList = []
-
+def timerThread():
+   while running: 
+    print("sleeping timer thread")
+    sys.stdout.flush() 
+    time.sleep(timeInterval)
+    print("sending request from timer thread")
+    sys.stdout.flush()
+    items_queue.put("floodEmail")
 
 def items_queue_worker():
-    timer  = 1
     subscriberListLocal = []
     print("Thread started")
     sys.stdout.flush()
     while running:
         try:
-            item = items_queue.get(timeout=.1)
-            timer = timer + 1
-            if(timer == 120):
-              subscriberListLocal = process_item("",subscriberListLocal)
-              timer  = 0
+            item = items_queue.get(timeout=1)
+            print("receiving an item in queue "+ item)
+            sys.stdout.flush()
+            
             if item is None:
                 continue
+            print(subscriberListLocal)
+            sys.stdout.flush()
+            if(item == "floodEmail"):
+              subscriberListLocal = process_item("",subscriberListLocal)
+              continue
 
             try:
                 subscriberListLocal = process_item(item,subscriberListLocal)
@@ -82,9 +94,12 @@ def process_item(newSubscriber,subscriberListLocal):
       rabbitMQChannel.queue_declare(queue='toComputeEngine')
       for subscriber in subscriberListLocal: 
         cmd = subscriber.split('$')
+        newCmd = "00"+"$"+cmd[2]+"$"+cmd[3]+"$"+cmd[1]
+        print(newCmd)
+        sys.stdout.flush()
         print("Sending update for subscribed user" + cmd[1] + " user with startLoc " + cmd[2] + " endLoc "+cmd[3])
         sys.stdout.flush()
-        rabbitMQChannel.basic_publish(exchange='',routing_key='toComputeEngine', body=subscriber)
+        rabbitMQChannel.basic_publish(exchange='',routing_key='toComputeEngine', body=newCmd)
       rabbitMQChannel.close()
       rabbitMQ.close()
       return subscriberListLocal
@@ -97,14 +112,17 @@ def process_item(newSubscriber,subscriberListLocal):
     cmd  =  newSubscriber.split('$')
     isPresent = False
     for subscriber in subscriberListLocal:
-      if(subscriber == newSubscriber):
+      cmd1 = subscriber.split("$")
+      if(cmd1[1] == cmd[1]):
         isPresent = True
-        if(isPresent == False and cmd[0]=='01'):      
+
+    if(isPresent == False and cmd[0]=='01'):      
             print("got a subscribe request")
+            sys.stdout.flush()
             subscriberListLocal.append(newSubscriber)
-        if(isPresent == True and cmd[0]=='02'):
-            print("got an unsubscribe request")
-            subscriberListLocal.remove(newSubscriber)
+    if(isPresent == True and cmd[0]=='02'):
+            subscriberListLocal.remove(subscriber)    
+    print(subscriberListLocal)        
     print('processing {} done'.format(newSubscriber))
     return subscriberListLocal
 
@@ -113,7 +131,7 @@ def subscribe(string):
     items_queue.put(string)
     return
 def unsubscribe(string):
-    subscriberList.remove(string)
+    #subscriberList.remove(string)
     items_queue.put(string)
     return
 def onWeatherChange(message):
@@ -128,17 +146,17 @@ def callback(ch, method, properties, body):
     print(" [x] Received %r" % body.decode())
     string  = body.decode('utf-8')
     cmd  =  string.split('$')
-    if(cmd == "01"):
+    if(cmd[0] == "01"):
       if(len(cmd)<3):
         print(" subscribe cmd is not proper, follow CMD SUBCMD ARG1 ARG2 ARG3")
       subscribe(string)
     
-    if(cmd == "02"):
-      if(len(cmd)<3):
+    if(cmd[0] == "02"):
+      if(len(cmd)<2):
         print(" unsubscribe cmd is not proper, follow CMD SUBCMD ARG1 ARG2 ARG3")
       unsubscribe(string)
 
-    if(cmd == "05"):
+    if(cmd[0] == "05"):
         sendGmail(cmd[1],adminEmailId,adminEmailPsw,cmd[2])
         print(" Sending mail to subscriber "+ cmd[1])
         #onWeatherChange(cmd[2]+" "+cmd[3]+" "+cmd[4])
@@ -149,6 +167,7 @@ def callback(ch, method, properties, body):
 #
 
 threading.Thread(target=items_queue_worker).start()
+threading.Thread(target=timerThread).start()
 #for i in range(10):
 #    time.sleep(1)
 #    items_queue.put(-1*i)
