@@ -14,7 +14,7 @@ spec:
     spec:
       containers:
       - name: subscriber-manager
-        image: soma5722/subscriber-worker:latest
+        image: lincolnrychecky/subscriber-worker:latest
         ports:
         - containerPort: 5000
         resources:

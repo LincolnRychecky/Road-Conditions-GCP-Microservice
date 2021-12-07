@@ -29,11 +29,13 @@ running = True
 ## 
 redisHost = os.getenv("REDIS_HOST") or "localhost"
 rabbitMQHost = os.getenv("RABBITMQ_HOST") or "localhost"
-adminEmailId = 'soma5722@colorado.edu'
-adminEmailPsw = ''
+# adminEmailId = 'soma5722@colorado.edu'
+# adminEmailPsw = ''
+adminEmailId = 'Your.Commute.Conditions@gmail.com'
+adminEmailPsw = '#Skobuffs21'
 #directionsdb = redis.Redis(host='redis', charset="utf-8", db=1, decode_responses=True)
 #weatherdb = redis.Redis(host='redis', charset="utf-8", db=0, decode_responses=True)
-subscriptionListDB = redis.Redis(host='redis', charset="utf-8", db=2, decode_responses=True)
+subscriptionListDB = redis.Redis(host=redisHost, charset="utf-8", db=2, decode_responses=True)
 print(f"Connecting to rabbitmq({rabbitMQHost}) and redis({redisHost})")
 
 def sendGmail(receiiverEmailId, senderEmailId, senderEmailPsw, content):
@@ -89,7 +91,7 @@ def process_item(newSubscriber,subscriberListLocal):
       sys.stdout.flush()
       print("going to update users about wearther condition")
       sys.stdout.flush()
-      rabbitMQ = pika.BlockingConnection(pika.ConnectionParameters(host='rabbitmq'))
+      rabbitMQ = pika.BlockingConnection(pika.ConnectionParameters(host=rabbitMQHost))
       rabbitMQChannel = rabbitMQ.channel()
       rabbitMQChannel.queue_declare(queue='toComputeEngine')
       for subscriber in subscriberListLocal: 
@@ -174,7 +176,7 @@ threading.Thread(target=timerThread).start()
     # Wait for all items to finish processing
 
 rabbitMQ = pika.BlockingConnection(
-        pika.ConnectionParameters(host='rabbitmq'))
+        pika.ConnectionParameters(host=rabbitMQHost))
 rabbitMQChannel = rabbitMQ.channel()
 
 rabbitMQChannel.queue_declare(queue='toSubscriberWorker')
