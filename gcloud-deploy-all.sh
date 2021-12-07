@@ -8,8 +8,8 @@ kubectl apply -f rabbitmq/rabbitmq-service.yaml
 
 # rest server
 kubectl apply -f rest-server/rest-deployment.yaml
-kubectl apply -f rest-server/rest-service.yaml
-kubectl apply -f rest-server/rest-ingress.yaml
+kubectl apply -f rest-server/gcloud-rest-service.yaml
+kubectl apply -f rest-server/gcloud-ingress.yaml
 
 # logs
 kubectl apply -f logs/logs-deployment.yaml
