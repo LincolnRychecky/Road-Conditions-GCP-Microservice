@@ -22,3 +22,4 @@ kubectl apply -f subscriber-worker/subscriber-service.yaml
 kubectl apply -f Compute-Engine/compute-engine-deployment.yaml
 kubectl apply -f MapsWorker/maps-worker-deployment.yaml
 kubectl apply -f weather-worker/weather-worker-deployment.yaml
+kubectl apply -f carbonFootprint-worker/carbonfootprint-deployment.yaml
