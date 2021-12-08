@@ -94,7 +94,7 @@ def construct_message(weatherData):
         emailMessage = emailMessage + "temp: " + str(temp[location]) + " degrees F.\n"
         emailMessage = emailMessage + "wind: " + str(windSpeed[location]) + " mph.\n"
         emailMessage = emailMessage + "\n"
-    emailMessage = emailMessage + "Have a safe drive"
+    #emailMessage = emailMessage + "Have a safe drive \n"
     # return the formatted message ready for sending to end user
     return emailMessage
 
@@ -104,6 +104,15 @@ def toSubscriptionService(string):
     channel = connection.channel()
     channel.basic_publish(exchange='', routing_key='toSubscriberWorker', body=string)
     print(" [x] Sent %r" % ('toSubscriberWorker'))
+    channel.close()
+    connection.close()
+def toCarbonService(string):
+    print("Sending request to carbonService")
+    connection = pika.BlockingConnection(
+    pika.ConnectionParameters(host=rabbitMQHost))
+    channel = connection.channel()
+    channel.basic_publish(exchange='', routing_key='toCarbonFootprintWorker', body=string)
+    print(" [x] Sent %r" % ('toCarbonFootprintWorker'))
     channel.close()
     connection.close()
 
@@ -138,18 +147,29 @@ def callback(ch, method, properties, body):
             time.sleep(1)
         directionsData = {'path': json.loads(directionsdb.get(formattedAddressStart+"$"+formattedAddressEnd))}
         to_weather_worker(directionsData)
+
+        print("-------")
+        print(directionsData['path'][0]['distance']['text'])
+        distance = directionsData['path'][0]['distance']['text']
+        print("-------")
+        print(directionsData['path'][0]['duration']['text'])
+        duration = directionsData['path'][0]['duration']['text']
+        
         # do not proceed until weather database has been updated
         today = datetime.now()
         timestamp = str(today.year) + str(today.month) + str(today.day) + str(today.hour)
+        print("starting")
         while not weatherdb.get(formattedAddressStart+"$"+formattedAddressEnd+"$"+timestamp):
                 time.sleep(1)
+                print("waiting")
         # construct message
         weatherData = json.loads(weatherdb.get(formattedAddressStart+"$"+formattedAddressEnd+"$"+timestamp))['weather']
         weatherMessage = construct_message(weatherData)
         # else:
         #   print("db was not ready ")
-        message  = "05"+"$"+cmd[3]+"$"+weatherMessage
-        toSubscriptionService(message)
+        message  = "07"+"$"+cmd[3]+"$"+weatherMessage+"$"+distance+"$"+duration
+        print(message)
+        toCarbonService(message)
         print(weatherMessage + "\n Callback Complete")
 
 
