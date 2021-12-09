@@ -23,3 +23,7 @@ kubectl apply -f Compute-Engine/compute-engine-deployment.yaml
 kubectl apply -f MapsWorker/maps-worker-deployment.yaml
 kubectl apply -f weather-worker/weather-worker-deployment.yaml
 kubectl apply -f carbonFootprint-worker/carbonfootprint-deployment.yaml
+
+# port forward redis and rabbitmq services to localhost
+kubectl port-forward --address 0.0.0.0 service/rabbitmq 5672:5672 &
+kubectl port-forward --address 0.0.0.0 service/redis 6379:6379 &
