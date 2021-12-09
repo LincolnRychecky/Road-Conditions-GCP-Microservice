@@ -72,15 +72,6 @@ def callback(ch, method, properties, body):
         response = requests.get("http://api.openweathermap.org/data/2.5/weather?lat=%s&lon=%s&appid=%s" % (str(cord['lat']), str(cord['lng']), apiKey))
         weather.append(response.json())
 
-    # add to database
-    # if not db.get(data[0]['start_address']):
-    #     dbData = {data[0]['end_address']: weather}
-    #     db.mset({data[0]['start_address']: json.dumps(dbData)})
-    #     # db.mset({data[0]['start_address']:"Hello"})
-    # else:
-    #     dbData = json.loads(db.get(data[0]['start_address']))
-    #     dbData[data[0]['end_address']] = weather
-    #     db.mset({data[0]['start_address']: json.dumps(dbData)})
     if not db.get(data[0]['start_address']+"$"+data[0]['end_address']+"$"+timestamp):
         dbData = {"weather": weather}
         db.mset({data[0]['start_address']+"$"+data[0]['end_address']+"$"+timestamp:json.dumps(dbData)})
