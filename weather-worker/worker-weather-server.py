@@ -51,7 +51,7 @@ def log_info(message, key=infoKey):
 ## Your code goes here...
 ##
 
-apiKey = "e82669bea7b79714ada39720b6fd35df"
+apiKey = ""
 
 def callback(ch, method, properties, body):
     today = datetime.now()
