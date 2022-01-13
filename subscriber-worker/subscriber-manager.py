@@ -32,7 +32,7 @@ rabbitMQHost = os.getenv("RABBITMQ_HOST") or "localhost"
 # adminEmailId = 'soma5722@colorado.edu'
 # adminEmailPsw = ''
 adminEmailId = 'Your.Commute.Conditions@gmail.com'
-adminEmailPsw = '#Skobuffs21'
+adminEmailPsw = ''
 #directionsdb = redis.Redis(host='redis', charset="utf-8", db=1, decode_responses=True)
 #weatherdb = redis.Redis(host='redis', charset="utf-8", db=0, decode_responses=True)
 subscriptionListDB = redis.Redis(host=redisHost, charset="utf-8", db=2, decode_responses=True)
